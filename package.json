@@ -1,0 +1,19 @@
+{
+  "name": "spineeasel",
+  "version": "1.0.0",
+  "description": "Spine lib for EaselJS",
+  "main": "SpineEasel.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TheBlurrypixel/SpineEasel.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/TheBlurrypixel/SpineEasel/issues"
+  },
+  "homepage": "https://github.com/TheBlurrypixel/SpineEasel#readme"
+}
