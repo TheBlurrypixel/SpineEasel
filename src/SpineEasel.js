@@ -9,12 +9,13 @@ function hermite(a, b, c, d)
 }
 
 export class SpineEasel {
-	constructor(inRootContainer, inStage, inSkeletonPath, inLib, inAnimationClip) {
+	constructor(inRootContainer, inStage, inSkeletonPath, inLib, inAnimationClip, inSpeedFactor = 1.0) {
 		this.rootContainer = inRootContainer;
 		this.stage = inStage;
 		this.skeletonPath = inSkeletonPath;
 		this.lib = inLib;
 		this.animationClip = inAnimationClip;
+		this.speedFactor = inSpeedFactor;
 		this.bones = new Array();
 		this.slots = new Array();
 
@@ -25,6 +26,14 @@ export class SpineEasel {
 		xhr.onload = this.skeletonLoadHandler.bind(this);
 		xhr.onprogress = this.skeletonProgressHandler.bind(this);
 		xhr.send();
+	}
+
+	set speedFactor(inSpeedFactor) {
+		this._speedFactor = inSpeedFactor;
+	}
+
+	get speedFactor() {
+		return this._speedFactor;
 	}
 
 	skeletonProgressHandler(event) {
@@ -82,6 +91,7 @@ export class SpineEasel {
 	}
 
 	startAnimation() {
+		var speedFactor = this.speedFactor;
 		this.charData.slots.forEach( (item) => {
 			var animState = this.charData.animations[this.animationClip].bones[item.bone];
 			if(animState) {
@@ -91,7 +101,7 @@ export class SpineEasel {
 					let initialPosition = new createjs.Point(this.bones[item.bone].x, this.bones[item.bone].y);
 					let tweenObj = createjs.Tween.get(this.bones[item.bone]);
 					animState.translate.forEach( (t_item) => {
-						let duration = (t_item.time - timeStamp) * 1000;
+						let duration = (t_item.time - timeStamp) * 1000/speedFactor;
 						timeStamp = t_item.time;
 						if(duration > 0)
 							tweenObj = tweenObj.to( { x: initialPosition.x + t_item.x, y: initialPosition.y - t_item.y }, duration, t_item.curve ? hermite.call(this, ...t_item.curve) : null );
@@ -104,7 +114,7 @@ export class SpineEasel {
 					let initialRotation = this.bones[item.bone].rotation;
 					let tweenObj = createjs.Tween.get(this.bones[item.bone]);
 					animState.rotate.forEach( (r_item) => {
-						let duration = (r_item.time - timeStamp) * 1000;
+						let duration = (r_item.time - timeStamp) * 1000/speedFactor;
 						timeStamp = r_item.time;
 						if(duration > 0)
 							tweenObj = tweenObj.to( { rotation: initialRotation - r_item.angle }, duration );
@@ -116,7 +126,7 @@ export class SpineEasel {
 					let timeStamp = 0;
 					let tweenObj = createjs.Tween.get(this.bones[item.bone]);
 					animState.scale.forEach( (s_item) => {
-						let duration = (s_item.time - timeStamp) * 1000;
+						let duration = (s_item.time - timeStamp) * 1000/speedFactor;
 						timeStamp = s_item.time;
 						if(duration > 0)
 							tweenObj = tweenObj.to( { scaleX: s_item.x, scaleY: s_item.y }, duration );
@@ -128,6 +138,7 @@ export class SpineEasel {
 	}
 
 	loopAnimation() {
+		var speedFactor = this.speedFactor;
 		var longestTime = 0;
 		this.charData.slots.forEach( (item) => {
 			var animState = this.charData.animations[this.animationClip].bones[item.bone];
@@ -142,7 +153,7 @@ export class SpineEasel {
 					let initialPosition = new createjs.Point(this.bones[item.bone].initialX, this.bones[item.bone].initialY);
 					let tweenObj = createjs.Tween.get(this.bones[item.bone]);
 					animState.translate.forEach( (t_item) => {
-						let duration = (t_item.time - timeStamp) * 1000;
+						let duration = (t_item.time - timeStamp) * 1000/speedFactor;
 						timeStamp = t_item.time;
 						if(duration > 0)
 							tweenObj = tweenObj.to( { x: initialPosition.x + t_item.x, y: initialPosition.y - t_item.y }, duration, t_item.curve ? hermite.call(this, ...t_item.curve) : null );
@@ -156,7 +167,7 @@ export class SpineEasel {
 					let initialRotation = this.bones[item.bone].initialRotation;
 					let tweenObj = createjs.Tween.get(this.bones[item.bone]);
 					animState.rotate.forEach( (r_item) => {
-						let duration = (r_item.time - timeStamp) * 1000;
+						let duration = (r_item.time - timeStamp) * 1000/speedFactor;
 						timeStamp = r_item.time;
 						if(duration > 0)
 							tweenObj = tweenObj.to( { rotation: initialRotation - r_item.angle }, duration );
@@ -170,7 +181,7 @@ export class SpineEasel {
 					let initialScale = new createjs.Point(this.bones[item.bone].initialScaleX, this.bones[item.bone].initialScaleY);
 					let tweenObj = createjs.Tween.get(this.bones[item.bone]);
 					animState.scale.forEach( (s_item) => {
-						let duration = (s_item.time - timeStamp) * 1000;
+						let duration = (s_item.time - timeStamp) * 1000/speedFactor;
 						timeStamp = s_item.time;
 						if(duration > 0)
 							tweenObj = tweenObj.to( { scaleX: initialScale.x * s_item.x, scaleY: initialScale.y * s_item.y }, duration );
@@ -183,7 +194,7 @@ export class SpineEasel {
 			}
 		});
 		if(longestTime > 0) {
-			setTimeout(this.loopAnimation.bind(this), longestTime * 1000 + 33);
+			setTimeout(this.loopAnimation.bind(this), (longestTime * 1000 + 33)/speedFactor);
 		}
 	}
 }
