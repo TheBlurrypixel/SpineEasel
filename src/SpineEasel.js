@@ -56,7 +56,6 @@ export class SpineEasel {
 				if(item.scaleY) this.bones[item.name].scaleY = this.bones[item.name].initialScaleY = -item.scaleY;
 
 				this.bones[item.parent].addChildAt(this.bones[item.name], 0);
-				console.log(item.name);
 			}
 		});
 
@@ -183,7 +182,6 @@ export class SpineEasel {
 				longestTime = a_longestTime > longestTime ? a_longestTime : longestTime;
 			}
 		});
-			console.log(longestTime);
 		if(longestTime > 0) {
 			setTimeout(this.loopAnimation.bind(this), longestTime * 1000 + 33);
 		}
