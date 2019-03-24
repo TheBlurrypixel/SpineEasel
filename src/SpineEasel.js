@@ -9,9 +9,8 @@ function hermite(a, b, c, d)
 }
 
 export class SpineEasel {
-	constructor(inRootContainer, inStage, inSkeletonPath, inLib, inAnimationClip, inSpeedFactor = 1.0) {
+	constructor(inRootContainer, inSkeletonPath, inLib, inAnimationClip, inSpeedFactor = 1.0) {
 		this.rootContainer = inRootContainer;
-		this.stage = inStage;
 		this.skeletonPath = inSkeletonPath;
 		this.lib = inLib;
 		this.animationClip = inAnimationClip;
@@ -70,8 +69,8 @@ export class SpineEasel {
 
 		// attach a MovieClip to the bones
 		this.charData.slots.forEach( (item) => {
-			var obj = new this.lib[item.name + 'MC'];
-			obj.name = item.name + 'MC';
+			var obj = new this.lib[item.name];
+			obj.name = item.name;
 
 			if(this.charData.skins.default[item.name][item.name].x) obj.x = this.charData.skins.default[item.name][item.name].x;
 			if(this.charData.skins.default[item.name][item.name].y) obj.y = -this.charData.skins.default[item.name][item.name].y;
@@ -82,9 +81,6 @@ export class SpineEasel {
 		});
 
 		this.rootContainer.addChild(this.bones['root']);
-		this.rootContainer.x = 1200;
-		this.rootContainer.y = 950;
-		this.stage.update();
 
 		var event = new createjs.Event("ready");
 		this.dispatchEvent(event);
