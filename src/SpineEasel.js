@@ -134,6 +134,14 @@ export class SpineEasel {
 		// if(this.s_Tweens.length > 0) this.s_Tweens.forEach( item => item.paused = false);
 	}
 
+	restart() {
+		console.log("restarting");
+		this.charData.bones.forEach( (item) => {
+			createjs.Tween.removeTweens(this.bones[item.name]);
+		});
+		this.start();
+	}
+
 	start() {
 		var speedFactor = this.speedFactor;
 		this.t_Tweens = new Array();
