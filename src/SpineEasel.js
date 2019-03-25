@@ -20,9 +20,9 @@ export class SpineEasel {
 		this.slots = new Array();
 
 		this.charData = null;
-		this.t_Tweens = new Array();
-		this.r_Tweens = new Array();
-		this.s_Tweens = new Array();
+		this.t_Tweens = null;
+		this.r_Tweens = null;
+		this.s_Tweens = null;
 
 		var xhr = new XMLHttpRequest();
 		xhr.open("GET", this.skeletonPath, true);
@@ -98,7 +98,7 @@ export class SpineEasel {
 		this.dispatchEvent(event);
 	}
 
-	stop() {
+	pause() {
 		// getters for paused dont work correctly in pre v.1.0.0 versions - use _paused instead
 		if(this.t_Tweens.length > 0) this.t_Tweens.forEach( item => item._paused = true);
 		if(this.r_Tweens.length > 0) this.r_Tweens.forEach( item => item._paused = true);
@@ -108,7 +108,7 @@ export class SpineEasel {
 		// if(this.s_Tweens.length > 0) this.s_Tweens.forEach( item => item.paused = true);
 	}
 
-	play() {
+	resume() {
 		// getters for paused dont work correctly in pre v.1.0.0 versions - use _paused instead
 		if(this.t_Tweens.length > 0) this.t_Tweens.forEach( item => item._paused = false);
 		if(this.r_Tweens.length > 0) this.r_Tweens.forEach( item => item._paused = false);
@@ -118,8 +118,11 @@ export class SpineEasel {
 		// if(this.s_Tweens.length > 0) this.s_Tweens.forEach( item => item.paused = false);
 	}
 
-	playAnimation() {
+	start() {
 		var speedFactor = this.speedFactor;
+		this.t_Tweens = new Array();
+		this.r_Tweens = new Array();
+		this.s_Tweens = new Array();
 
 		this.charData.slots.forEach( (item) => {
 			var animState = this.charData.animations[this.animationClip].bones[item.bone];
