@@ -135,7 +135,6 @@ export class SpineEasel {
 	}
 
 	restart() {
-		console.log("restarting");
 		this.charData.bones.forEach( (item) => {
 			createjs.Tween.removeTweens(this.bones[item.name]);
 		});
