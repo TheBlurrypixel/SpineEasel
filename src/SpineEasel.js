@@ -9,22 +9,34 @@ function hermite(a, b, c, d)
 }
 
 export class SpineEasel {
-	constructor(inRootContainer, inSkeletonPath, inLib, inAnimationClip, inSpeedFactor = 1.0) {
+	constructor(inRootContainer, inSkeletonPath, inLib, inAnimationClip, loop = 0, inSpeedFactor = 1.0) {
 		this.rootContainer = inRootContainer;
 		this.skeletonPath = inSkeletonPath;
 		this.lib = inLib;
 		this.animationClip = inAnimationClip;
+		this.loop = loop;
 		this.speedFactor = inSpeedFactor;
 		this.bones = new Array();
 		this.slots = new Array();
 
-		this.charData;
+		this.charData = null;
+		this.t_Tweens = new Array();
+		this.r_Tweens = new Array();
+		this.s_Tweens = new Array();
 
 		var xhr = new XMLHttpRequest();
 		xhr.open("GET", this.skeletonPath, true);
 		xhr.onload = this.skeletonLoadHandler.bind(this);
 		xhr.onprogress = this.skeletonProgressHandler.bind(this);
 		xhr.send();
+	}
+
+	set loop(inLoop) {
+		this._loop = inLoop;
+	}
+
+	get loop() {
+		return this._loop;
 	}
 
 	set speedFactor(inSpeedFactor) {
@@ -86,112 +98,76 @@ export class SpineEasel {
 		this.dispatchEvent(event);
 	}
 
-	startAnimation() {
-		var speedFactor = this.speedFactor;
-		this.charData.slots.forEach( (item) => {
-			var animState = this.charData.animations[this.animationClip].bones[item.bone];
-			if(animState) {
-
-				if(animState.translate) {
-					let timeStamp = 0;
-					let initialPosition = new createjs.Point(this.bones[item.bone].x, this.bones[item.bone].y);
-					let tweenObj = createjs.Tween.get(this.bones[item.bone]);
-					animState.translate.forEach( (t_item) => {
-						let duration = (t_item.time - timeStamp) * 1000/speedFactor;
-						timeStamp = t_item.time;
-						if(duration > 0)
-							tweenObj = tweenObj.to( { x: initialPosition.x + t_item.x, y: initialPosition.y - t_item.y }, duration, t_item.curve ? hermite.call(this, ...t_item.curve) : null );
-					});
-					tweenObj.wait(1);
-				}
-
-				if(animState.rotate) {
-					let timeStamp = 0;
-					let initialRotation = this.bones[item.bone].rotation;
-					let tweenObj = createjs.Tween.get(this.bones[item.bone]);
-					animState.rotate.forEach( (r_item) => {
-						let duration = (r_item.time - timeStamp) * 1000/speedFactor;
-						timeStamp = r_item.time;
-						if(duration > 0)
-							tweenObj = tweenObj.to( { rotation: initialRotation - r_item.angle }, duration );
-					});
-					tweenObj.wait(1);
-				}
-
-				if(animState.scale) {
-					let timeStamp = 0;
-					let tweenObj = createjs.Tween.get(this.bones[item.bone]);
-					animState.scale.forEach( (s_item) => {
-						let duration = (s_item.time - timeStamp) * 1000/speedFactor;
-						timeStamp = s_item.time;
-						if(duration > 0)
-							tweenObj = tweenObj.to( { scaleX: s_item.x, scaleY: s_item.y }, duration );
-					});
-					tweenObj.wait(1);
-				}
-			}
-		});
+	stop() {
+		// getters for paused dont work correctly in pre v.1.0.0 versions - use _paused instead
+		if(this.t_Tweens.length > 0) this.t_Tweens.forEach( item => item._paused = true);
+		if(this.r_Tweens.length > 0) this.r_Tweens.forEach( item => item._paused = true);
+		if(this.s_Tweens.length > 0) this.s_Tweens.forEach( item => item._paused = true);
+		// if(this.t_Tweens.length > 0) this.t_Tweens.forEach( item => item.paused = true);
+		// if(this.r_Tweens.length > 0) this.r_Tweens.forEach( item => item.paused = true);
+		// if(this.s_Tweens.length > 0) this.s_Tweens.forEach( item => item.paused = true);
 	}
 
-	loopAnimation() {
+	play() {
+		// getters for paused dont work correctly in pre v.1.0.0 versions - use _paused instead
+		if(this.t_Tweens.length > 0) this.t_Tweens.forEach( item => item._paused = false);
+		if(this.r_Tweens.length > 0) this.r_Tweens.forEach( item => item._paused = false);
+		if(this.s_Tweens.length > 0) this.s_Tweens.forEach( item => item._paused = false);
+		// if(this.t_Tweens.length > 0) this.t_Tweens.forEach( item => item.paused = false);
+		// if(this.r_Tweens.length > 0) this.r_Tweens.forEach( item => item.paused = false);
+		// if(this.s_Tweens.length > 0) this.s_Tweens.forEach( item => item.paused = false);
+	}
+
+	playAnimation() {
 		var speedFactor = this.speedFactor;
-		var longestTime = 0;
+
 		this.charData.slots.forEach( (item) => {
 			var animState = this.charData.animations[this.animationClip].bones[item.bone];
 			if(animState) {
 
-				var a_longestTime = 0,
-					t_longestTime = 0,
-					r_longestTime = 0,
-					s_longestTime = 0;
 				if(animState.translate) {
 					let timeStamp = 0;
 					let initialPosition = new createjs.Point(this.bones[item.bone].initialX, this.bones[item.bone].initialY);
 					let tweenObj = createjs.Tween.get(this.bones[item.bone]);
+					tweenObj.loop = this.loop;
 					animState.translate.forEach( (t_item) => {
 						let duration = (t_item.time - timeStamp) * 1000/speedFactor;
 						timeStamp = t_item.time;
 						if(duration > 0)
-							tweenObj = tweenObj.to( { x: initialPosition.x + t_item.x, y: initialPosition.y - t_item.y }, duration, t_item.curve ? hermite.call(this, ...t_item.curve) : null );
-						t_longestTime = t_item.time > t_longestTime ? t_item.time : t_longestTime;
+							tweenObj.to( { x: initialPosition.x + t_item.x, y: initialPosition.y - t_item.y }, duration, t_item.curve ? hermite.call(this, ...t_item.curve) : null );
 					});
-					tweenObj.wait(1);
+					this.t_Tweens.push(tweenObj.wait(1));
 				}
 
 				if(animState.rotate) {
 					let timeStamp = 0;
 					let initialRotation = this.bones[item.bone].initialRotation;
 					let tweenObj = createjs.Tween.get(this.bones[item.bone]);
+					tweenObj.loop = this.loop;
 					animState.rotate.forEach( (r_item) => {
 						let duration = (r_item.time - timeStamp) * 1000/speedFactor;
 						timeStamp = r_item.time;
 						if(duration > 0)
-							tweenObj = tweenObj.to( { rotation: initialRotation - r_item.angle }, duration );
-						r_longestTime = r_item.time > r_longestTime ? r_item.time : r_longestTime;
+							tweenObj.to( { rotation: initialRotation - r_item.angle }, duration );
 					});
-					tweenObj.wait(1);
+					this.r_Tweens.push(tweenObj.wait(1));
 				}
 
 				if(animState.scale) {
 					let timeStamp = 0;
 					let initialScale = new createjs.Point(this.bones[item.bone].initialScaleX, this.bones[item.bone].initialScaleY);
 					let tweenObj = createjs.Tween.get(this.bones[item.bone]);
+					tweenObj.loop = this.loop;
 					animState.scale.forEach( (s_item) => {
 						let duration = (s_item.time - timeStamp) * 1000/speedFactor;
 						timeStamp = s_item.time;
 						if(duration > 0)
-							tweenObj = tweenObj.to( { scaleX: initialScale.x * s_item.x, scaleY: initialScale.y * s_item.y }, duration );
-						s_longestTime = s_item.time > s_longestTime ? s_item.time : s_longestTime;
+						tweenObj.to( { scaleX: initialScale.x * s_item.x, scaleY: initialScale.y * s_item.y }, duration );
 					});
-					tweenObj.wait(1);
+					this.s_Tweens.push(tweenObj.wait(1));
 				}
-				a_longestTime = t_longestTime > s_longestTime ? (t_longestTime > r_longestTime ? t_longestTime : r_longestTime) : s_longestTime;
-				longestTime = a_longestTime > longestTime ? a_longestTime : longestTime;
 			}
 		});
-		if(longestTime > 0) {
-			setTimeout(this.loopAnimation.bind(this), (longestTime * 1000 + 33)/speedFactor);
-		}
 	}
 }
 
