@@ -16,7 +16,7 @@ function hermite(a, b, c, d)
 }
 
 export class SpineEasel {
-	constructor(inRootContainer, inSkeletonPath, inLib, inAnimationClip, loop = 0, inSpeedFactor = 1.0) {
+	constructor(inRootContainer, inSkeletonPath, inLib, inAnimationClip, rootScale = 1.0, loop = 0, inSpeedFactor = 1.0) {
 		this.rootContainer = inRootContainer;
 		this.skeletonPath = inSkeletonPath;
 		this.lib = inLib;
@@ -25,6 +25,7 @@ export class SpineEasel {
 		this.speedFactor = inSpeedFactor;
 		this.bones = new Array();
 		this.slots = new Array();
+		this.rootScale = rootScale;
 
 		this.charData = null;
 		this.t_Tweens = null;
@@ -36,6 +37,14 @@ export class SpineEasel {
 		xhr.onload = this.skeletonLoadHandler.bind(this);
 		xhr.onprogress = this.skeletonProgressHandler.bind(this);
 		xhr.send();
+	}
+
+	set rootScale(inRootScale) {
+		this._rootScale = inRootScale;
+	}
+
+	get rootScale() {
+		return this._rootScale;
 	}
 
 	set loop(inLoop) {
@@ -98,6 +107,7 @@ export class SpineEasel {
 			this.bones[item.bone].addChildAt(obj, 0);
 		});
 
+		this.bones['root'].scaleX = this.bones['root'].scaleY = this.rootScale;
 		this.rootContainer.addChild(this.bones['root']);
 
 		var event = new createjs.Event("ready");
