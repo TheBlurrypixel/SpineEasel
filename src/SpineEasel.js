@@ -15,8 +15,10 @@ function hermite(a, b, c, d)
 	}
 }
 
-export class SpineEasel {
+// we extend the class below the class definition
+export class SpineEasel extends createjs.EventDispatcher {
 	constructor(inRootContainer, inSkeletonPath, inLib, inAnimationClip, rootScale = 1.0, loop = 0, inSpeedFactor = 1.0) {
+		super();
 		this.rootContainer = inRootContainer;
 		this.skeletonPath = inSkeletonPath;
 		this.lib = inLib;
@@ -122,6 +124,8 @@ export class SpineEasel {
 		// if(this.t_Tweens.length > 0) this.t_Tweens.forEach( item => item.paused = true);
 		// if(this.r_Tweens.length > 0) this.r_Tweens.forEach( item => item.paused = true);
 		// if(this.s_Tweens.length > 0) this.s_Tweens.forEach( item => item.paused = true);
+		var event = new createjs.Event("pause");
+		this.dispatchEvent(event);
 	}
 
 	resume() {
@@ -132,6 +136,8 @@ export class SpineEasel {
 		// if(this.t_Tweens.length > 0) this.t_Tweens.forEach( item => item.paused = false);
 		// if(this.r_Tweens.length > 0) this.r_Tweens.forEach( item => item.paused = false);
 		// if(this.s_Tweens.length > 0) this.s_Tweens.forEach( item => item.paused = false);
+		var event = new createjs.Event("resume");
+		this.dispatchEvent(event);
 	}
 
 	restart() {
@@ -161,6 +167,12 @@ export class SpineEasel {
 						timeStamp = t_item.time;
 						tweenObj.to( { x: initialPosition.x + t_item.x, y: initialPosition.y - t_item.y }, duration, (t_item.curve && Array.isArray(t_item.curve))  ? hermite.call(this, ...t_item.curve) : null );
 					});
+					if(!this.loop)
+						tweenObj.call( () => {
+							var event = new createjs.Event("stop");
+							event.propCompleted = 'translate';
+							this.dispatchEvent(event);
+						});
 					this.t_Tweens.push(tweenObj.wait(1));
 				}
 
@@ -174,6 +186,12 @@ export class SpineEasel {
 						timeStamp = r_item.time;
 						tweenObj.to( { rotation: initialRotation - r_item.angle }, duration );
 					});
+					if(!this.loop)
+						tweenObj.call( () => {
+							var event = new createjs.Event("stop");
+							event.propCompleted = 'rotate';
+							this.dispatchEvent(event);
+						});
 					this.r_Tweens.push(tweenObj.wait(1));
 				}
 
@@ -187,13 +205,22 @@ export class SpineEasel {
 						timeStamp = s_item.time;
 						tweenObj.to( { scaleX: initialScale.x * s_item.x, scaleY: initialScale.y * s_item.y }, duration );
 					});
+					if(!this.loop)
+						tweenObj.call( () => {
+							var event = new createjs.Event("stop");
+							event.propCompleted = 'scale';
+							this.dispatchEvent(event);
+						});
 					this.s_Tweens.push(tweenObj.wait(1));
 				}
 			}
 		});
+		var event = new createjs.Event("play");
+		this.dispatchEvent(event);
 	}
 }
 
-createjs.EventDispatcher.initialize(SpineEasel.prototype);
+// inheritance via ES6 class instead
+// createjs.EventDispatcher.initialize(SpineEasel.prototype);
 
 export default SpineEasel;
