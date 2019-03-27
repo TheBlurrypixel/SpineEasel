@@ -112,8 +112,8 @@ export class SpineEasel extends createjs.EventDispatcher {
 		this.bones['root'].scaleX = this.bones['root'].scaleY = this.rootScale;
 		this.rootContainer.addChild(this.bones['root']);
 
-		var event = new createjs.Event("ready");
-		this.dispatchEvent(event);
+		var readyEvent = new createjs.Event('ready');
+		this.dispatchEvent(readyEvent);
 	}
 
 	pause() {
@@ -124,8 +124,8 @@ export class SpineEasel extends createjs.EventDispatcher {
 		// if(this.t_Tweens.length > 0) this.t_Tweens.forEach( item => item.paused = true);
 		// if(this.r_Tweens.length > 0) this.r_Tweens.forEach( item => item.paused = true);
 		// if(this.s_Tweens.length > 0) this.s_Tweens.forEach( item => item.paused = true);
-		var event = new createjs.Event("pause");
-		this.dispatchEvent(event);
+		var pauseEvent = new createjs.Event('pause');
+		this.dispatchEvent(pauseEvent);
 	}
 
 	resume() {
@@ -136,8 +136,8 @@ export class SpineEasel extends createjs.EventDispatcher {
 		// if(this.t_Tweens.length > 0) this.t_Tweens.forEach( item => item.paused = false);
 		// if(this.r_Tweens.length > 0) this.r_Tweens.forEach( item => item.paused = false);
 		// if(this.s_Tweens.length > 0) this.s_Tweens.forEach( item => item.paused = false);
-		var event = new createjs.Event("resume");
-		this.dispatchEvent(event);
+		var resumeEvent = new createjs.Event('resume');
+		this.dispatchEvent(resumeEvent);
 	}
 
 	restart() {
@@ -157,29 +157,16 @@ export class SpineEasel extends createjs.EventDispatcher {
 			var animState = this.charData.animations[this.animationClip].bones[item.name];
 			if(animState) {
 
-				var	a_longestTime = { time: 0, tween: null },
-						t_longestTime = { time: 0, tween: null },
-						r_longestTime = { time: 0, tween: null },
-						s_longestTime = { time: 0, tween: null };
-
 				if(animState.translate) {
 					let timeStamp = 0;
 					let initialPosition = new createjs.Point(this.bones[item.name].initialX, this.bones[item.name].initialY);
 					let tweenObj = createjs.Tween.get(this.bones[item.name]);
 					tweenObj.loop = this.loop;
-					t_longestTime.tween = tweenObj;
 					animState.translate.forEach( (t_item) => {
 						let duration = (t_item.time - timeStamp) * 1000/speedFactor;
 						timeStamp = t_item.time;
 						tweenObj.to( { x: initialPosition.x + t_item.x, y: initialPosition.y - t_item.y }, duration, (t_item.curve && Array.isArray(t_item.curve))  ? hermite.call(this, ...t_item.curve) : null );
-						if(t_item.time > t_longestTime.time) t_longestTime.time = t_item.time;
 					});
-					if(!this.loop)
-						tweenObj.call( () => {
-							var event = new createjs.Event("stop");
-							event.propCompleted = 'translate';
-							this.dispatchEvent(event);
-						});
 					this.t_Tweens.push(tweenObj.wait(1));
 				}
 
@@ -188,19 +175,11 @@ export class SpineEasel extends createjs.EventDispatcher {
 					let initialRotation = this.bones[item.name].initialRotation;
 					let tweenObj = createjs.Tween.get(this.bones[item.name]);
 					tweenObj.loop = this.loop;
-					r_longestTime.tween = tweenObj;
 					animState.rotate.forEach( (r_item) => {
 						let duration = (r_item.time - timeStamp) * 1000/speedFactor;
 						timeStamp = r_item.time;
 						tweenObj.to( { rotation: initialRotation - r_item.angle }, duration );
-						if(r_item.time > r_longestTime.time) r_longestTime.time = r_item.time;
 					});
-					if(!this.loop)
-						tweenObj.call( () => {
-							var event = new createjs.Event("stop");
-							event.propCompleted = 'rotate';
-							this.dispatchEvent(event);
-						});
 					this.r_Tweens.push(tweenObj.wait(1));
 				}
 
@@ -209,30 +188,33 @@ export class SpineEasel extends createjs.EventDispatcher {
 					let initialScale = new createjs.Point(this.bones[item.name].initialScaleX, this.bones[item.name].initialScaleY);
 					let tweenObj = createjs.Tween.get(this.bones[item.name]);
 					tweenObj.loop = this.loop;
-					s_longestTime.tween = tweenObj;
 					animState.scale.forEach( (s_item) => {
 						let duration = (s_item.time - timeStamp) * 1000/speedFactor;
 						timeStamp = s_item.time;
 						tweenObj.to( { scaleX: initialScale.x * s_item.x, scaleY: initialScale.y * s_item.y }, duration );
-						if(s_item.time > s_longestTime.time) s_longestTime.time = s_item.time;
 					});
-					if(!this.loop)
-						tweenObj.call( () => {
-							var event = new createjs.Event("stop");
-							event.propCompleted = 'scale';
-							this.dispatchEvent(event);
-						});
 					this.s_Tweens.push(tweenObj.wait(1));
 				}
-
-				// get the largest among the transforms
-				var temp = t_longestTime.time > r_longestTime.time ? t_longestTime : r_longestTime;
-				var tempTime = temp.time > s_longestTime.time ? temp : s_longestTime;
-				a_longestTime = a_longestTime.time > tempTime.time ? a_longestTime : tempTime;
 			}
 		});
-		var event = new createjs.Event("play");
-		this.dispatchEvent(event);
+
+		// get the longestTween and call stopEvent from it
+		var t_longTween = this.t_Tweens.reduce( (accum, curVal) => (curVal.duration > accum.duration) ? curVal : accum );
+		var r_longTween = this.r_Tweens.reduce( (accum, curVal) => (curVal.duration > accum.duration) ? curVal : accum );
+		var s_longTween = this.r_Tweens.reduce( (accum, curVal) => (curVal.duration > accum.duration) ? curVal : accum );
+
+		var tempTween = t_longTween.duration > r_longTween.duration ? t_longTween : r_longTween;
+		var longTween = tempTween.duration > s_longTween.duration ? tempTween : s_longTween;
+		if(longTween) {
+			longTween.call( () => {
+				var endEvent = new createjs.Event('stop');
+				endEvent.currentTarget = longTween;
+				this.dispatchEvent(endEvent);
+			});
+		}
+
+		var playEvent = new createjs.Event('play');
+		this.dispatchEvent(playEvent);
 	}
 }
 
