@@ -98,15 +98,18 @@ export class SpineEasel extends createjs.EventDispatcher {
 
 		// attach a MovieClip to the bones
 		this.charData.slots.forEach( (item) => {
-			var obj = new this.lib[item.name];
-			obj.name = item.name;
+			var skinnable = this.charData.skins.default[item.name];
+			Object.keys(skinnable).forEach( (ky) => {
+				var obj = new this.lib[ky];
+				obj.name = ky;
 
-			if(this.charData.skins.default[item.name][item.name].x) obj.x = this.charData.skins.default[item.name][item.name].x;
-			if(this.charData.skins.default[item.name][item.name].y) obj.y = -this.charData.skins.default[item.name][item.name].y;
-			if(this.charData.skins.default[item.name][item.name].width) obj.regX = this.charData.skins.default[item.name][item.name].width/2;
-			if(this.charData.skins.default[item.name][item.name].height) obj.regY = this.charData.skins.default[item.name][item.name].height/2;
+				if(skinnable[ky].x) obj.x = skinnable[ky].x;
+				if(skinnable[ky].y) obj.y = -skinnable[ky].y;
+				if(skinnable[ky].width) obj.regX = skinnable[ky].width/2;
+				if(skinnable[ky].height) obj.regY = skinnable[ky].height/2;
 
-			this.bones[item.bone].addChildAt(obj, 0);
+				this.bones[item.bone].addChildAt(obj, 0);
+			});
 		});
 
 		this.bones['root'].scaleX = this.bones['root'].scaleY = this.rootScale;
@@ -199,12 +202,26 @@ export class SpineEasel extends createjs.EventDispatcher {
 		});
 
 		// get the longestTween and call stopEvent from it
-		var t_longTween = this.t_Tweens.reduce( (accum, curVal) => (curVal.duration > accum.duration) ? curVal : accum );
-		var r_longTween = this.r_Tweens.reduce( (accum, curVal) => (curVal.duration > accum.duration) ? curVal : accum );
-		var s_longTween = this.r_Tweens.reduce( (accum, curVal) => (curVal.duration > accum.duration) ? curVal : accum );
+		var t_longTween = this.t_Tweens.length > 0 ? this.t_Tweens.reduce( (accum, curVal) => (curVal.duration > accum.duration) ? curVal : accum ) : null;
+		var r_longTween = this.r_Tweens.length > 0 ? this.r_Tweens.reduce( (accum, curVal) => (curVal.duration > accum.duration) ? curVal : accum ) : null;
+		var s_longTween = this.s_Tweens.length > 0 ? this.s_Tweens.reduce( (accum, curVal) => (curVal.duration > accum.duration) ? curVal : accum ) : null;
 
-		var tempTween = t_longTween.duration > r_longTween.duration ? t_longTween : r_longTween;
-		var longTween = tempTween.duration > s_longTween.duration ? tempTween : s_longTween;
+		var tempTween = null;
+		var longTween = null;
+
+		if(t_longTween && r_longTween) {
+			tempTween = t_longTween.duration > r_longTween.duration ? t_longTween : r_longTween;
+		}
+		else {
+			tempTween = t_longTween || r_longTween;
+		}
+
+		if(tempTween && s_longTween) {
+			longTween = tempTween.duration > s_longTween.duration ? tempTween : s_longTween;
+		}
+		else {
+			longTween = tempTween || s_longTween;
+		}
 		if(longTween) {
 			longTween.call( () => {
 				var endEvent = new createjs.Event('stop');
