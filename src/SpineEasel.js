@@ -17,10 +17,10 @@ function hermite(a, b, c, d)
 
 // we extend the class below the class definition
 export class SpineEasel extends createjs.EventDispatcher {
-	constructor(inRootContainer, inSkeletonPath, inLib, inAnimationClip, rootScale = 1.0, loop = 0, inSpeedFactor = 1.0, reverseDrawOrder = false) {
+	constructor(inRootContainer, inJSON, inLib, inAnimationClip, rootScale = 1.0, loop = 0, inSpeedFactor = 1.0, reverseDrawOrder = false) {
 		super();
 		this.rootContainer = inRootContainer;
-		this.skeletonPath = inSkeletonPath;
+		this.JSONData = inJSON;
 		this.lib = inLib;
 		this.animationClip = inAnimationClip;
 		this.loop = (loop === true) ? -1 : ((loop === false) ? 0 : loop);
@@ -29,17 +29,33 @@ export class SpineEasel extends createjs.EventDispatcher {
 		this.slots = new Array();
 		this.rootScale = rootScale;
 		this.reverseDrawOrder = reverseDrawOrder;
+		this.ready = false;
 
 		this.charData = null;
 		this.t_Tweens = null;
 		this.r_Tweens = null;
 		this.s_Tweens = null;
 
-		var xhr = new XMLHttpRequest();
-		xhr.open("GET", this.skeletonPath, true);
-		xhr.onload = this.skeletonLoadHandler.bind(this);
-		xhr.onprogress = this.skeletonProgressHandler.bind(this);
-		xhr.send();
+		this.skeletonLoadHandler = this.skeletonLoadHandler.bind(this);
+
+		if(typeof(inJSON) === 'string') {
+			var xhr = new XMLHttpRequest();
+			xhr.open("GET", this.JSONData, true);
+			xhr.onload = this.skeletonLoadHandler;
+			xhr.onprogress = this.skeletonProgressHandler.bind(this);
+			xhr.send();
+		}
+		else {
+			this.skeletonLoadHandler();
+		}
+	}
+
+	set ready(inReady) {
+		this._ready = inReady;
+	}
+
+	get ready() {
+		return this._ready;
 	}
 
 	set rootScale(inRootScale) {
@@ -71,7 +87,7 @@ export class SpineEasel extends createjs.EventDispatcher {
 	}
 
 	skeletonLoadHandler(event) {
-		this.charData = JSON.parse(event.target.response);
+		this.charData = event ? JSON.parse(event.target.response) : this.JSONData;
 
 		this.charData.bones.forEach( (item) => {
 			var obj = new createjs.Container();
@@ -102,7 +118,6 @@ export class SpineEasel extends createjs.EventDispatcher {
 		});
 
 		// attach a MovieClip to the bones
-
 		this.charData.slots.forEach( (item) => {
 			var skinnable = this.charData.skins.default[item.name];
 			Object.keys(skinnable).forEach( (ky) => {
@@ -126,6 +141,7 @@ export class SpineEasel extends createjs.EventDispatcher {
 
 		var readyEvent = new createjs.Event('ready');
 		this.dispatchEvent(readyEvent);
+		this.ready = true;
 	}
 
 	pause() {
