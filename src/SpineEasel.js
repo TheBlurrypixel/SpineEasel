@@ -17,7 +17,7 @@ function hermite(a, b, c, d)
 
 // we extend the class below the class definition
 export class SpineEasel extends createjs.EventDispatcher {
-	constructor(inRootContainer, inSkeletonPath, inLib, inAnimationClip, rootScale = 1.0, loop = 0, inSpeedFactor = 1.0) {
+	constructor(inRootContainer, inSkeletonPath, inLib, inAnimationClip, rootScale = 1.0, loop = 0, inSpeedFactor = 1.0, reverseDrawOrder = false) {
 		super();
 		this.rootContainer = inRootContainer;
 		this.skeletonPath = inSkeletonPath;
@@ -28,6 +28,7 @@ export class SpineEasel extends createjs.EventDispatcher {
 		this.bones = new Array();
 		this.slots = new Array();
 		this.rootScale = rootScale;
+		this.reverseDrawOrder = reverseDrawOrder;
 
 		this.charData = null;
 		this.t_Tweens = null;
@@ -92,11 +93,16 @@ export class SpineEasel extends createjs.EventDispatcher {
 				if(item.scaleX) this.bones[item.name].scaleX = this.bones[item.name].initialScaleX = item.scaleX;
 				if(item.scaleY) this.bones[item.name].scaleY = this.bones[item.name].initialScaleY = -item.scaleY;
 
-				if(item.parent)
-					this.bones[item.parent].addChildAt(this.bones[item.name], 0);
+				if(item.parent) {
+					if(this.reverseDrawOrder)
+						this.bones[item.parent].addChild(this.bones[item.name]);
+					else
+						this.bones[item.parent].addChildAt(this.bones[item.name], 0);
+				}
 		});
 
 		// attach a MovieClip to the bones
+
 		this.charData.slots.forEach( (item) => {
 			var skinnable = this.charData.skins.default[item.name];
 			Object.keys(skinnable).forEach( (ky) => {
@@ -108,7 +114,10 @@ export class SpineEasel extends createjs.EventDispatcher {
 				if(skinnable[ky].width) obj.regX = skinnable[ky].width/2;
 				if(skinnable[ky].height) obj.regY = skinnable[ky].height/2;
 
-				this.bones[item.bone].addChildAt(obj, 0);
+				if(this.reverseDrawOrder)
+					this.bones[item.bone].addChild(obj);
+				else
+					this.bones[item.bone].addChildAt(obj, 0);
 			});
 		});
 
