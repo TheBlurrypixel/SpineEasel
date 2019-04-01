@@ -107,7 +107,7 @@ export class SpineEasel extends createjs.EventDispatcher {
 				if(item.y) this.bones[item.name].y = this.bones[item.name].initialY = -item.y;
 				if(item.rotation) this.bones[item.name].rotation = this.bones[item.name].initialRotation = -item.rotation;
 				if(item.scaleX) this.bones[item.name].scaleX = this.bones[item.name].initialScaleX = item.scaleX;
-				if(item.scaleY) this.bones[item.name].scaleY = this.bones[item.name].initialScaleY = -item.scaleY;
+				if(item.scaleY) this.bones[item.name].scaleY = this.bones[item.name].initialScaleY = item.scaleY;
 
 				if(item.parent) {
 					if(this.reverseDrawOrder)
